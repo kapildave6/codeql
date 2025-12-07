@@ -1,9 +1,0 @@
-name: "Custom CodeQL Configuration"
-
-queries:
-  - uses: ./.github/codeql/custom-queries/detect-id-token-write.ql
-
-paths-ignore:
-  - '**/*.md'
-  - '**/node_modules/**'
-

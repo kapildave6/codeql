@@ -39,7 +39,7 @@ def scan_workflows():
                     issue = {
                         "ruleId": "github-actions/id-token-write",
                         "ruleIndex": 0,
-                        "level": "warning",
+                        "level": "error",
                         "message": {
                             "text": "Workflow uses 'id-token: write' permission which allows requesting OIDC tokens."
                         },
@@ -81,7 +81,7 @@ def generate_sarif(issues):
                             "text": "Detects when a workflow uses id-token: write permission, which allows the workflow to request OIDC tokens."
                         },
                         "defaultConfiguration": {
-                            "level": "warning"
+                            "level": "error"
                         },
                         "properties": {
                             "tags": ["security", "github-actions"]
