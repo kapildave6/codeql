@@ -27,7 +27,7 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Scan for id-token: write
+    - name: Scan for id-token write
       run: |
         python3 .github/scripts/scan_workflows.py
 
