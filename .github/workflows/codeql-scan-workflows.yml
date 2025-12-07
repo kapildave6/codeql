@@ -11,7 +11,7 @@ on:
 
 jobs:
   scan-workflows:
-    name: Scan Workflows for id-token: write
+    name: Scan Workflows for id-token write
     runs-on: ubuntu-latest
     permissions:
       actions: read
