@@ -1,0 +1,17 @@
+name: Test Workflow with id-token
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-job:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # This should be detected by CodeQL
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Test step
+        run: echo "This workflow uses id-token: write permission"
+
