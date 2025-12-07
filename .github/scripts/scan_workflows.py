@@ -103,7 +103,7 @@ if __name__ == "__main__":
         with open("results.sarif", "w") as f:
             json.dump(sarif, f, indent=2)
         print("Generated results.sarif")
-        exit(1)  # Exit with error to indicate issues found
+        exit(0)  # Exit successfully - issues will be reported as CodeQL alerts
     else:
         print("No issues found")
         # Create empty SARIF file
