@@ -13,5 +13,5 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test step
-        run: echo "This workflow uses id-token: write permission"
+        run: echo "This workflow uses id-token write permission"
 

@@ -1,0 +1,3 @@
+.github/workflows/*.yml linguist-detectable -linguist-vendored
+.github/workflows/*.yaml linguist-detectable -linguist-vendored
+
