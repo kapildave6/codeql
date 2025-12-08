@@ -1,0 +1,23 @@
+# Example workflow file to add to target repositories
+# Place this file at: .github/workflows/scan-workflows.yml
+# Replace 'your-org/security-scanner' with your actual central repository path
+
+name: "Security Workflow Scanner"
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master", "develop" ]
+  schedule:
+    - cron: '0 0 * * 0' # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  scan-workflows:
+    uses: your-org/security-scanner/.github/workflows/reusable-scan-workflows.yml@main
+    # Optional: customize the category
+    # with:
+    #   category: "custom-category-name"
+    secrets: inherit
+

@@ -1,0 +1,143 @@
+name: "Reusable CodeQL Workflow Scanner"
+
+on:
+  workflow_call:
+    inputs:
+      category:
+        description: 'Category for the SARIF upload'
+        required: false
+        type: string
+        default: 'workflow-security-scan'
+
+jobs:
+  scan-workflows:
+    name: Scan Workflows for id-token write
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Scan for id-token write and generate SARIF
+      run: |
+        cat > scan_workflows.py << 'EOF'
+        #!/usr/bin/env python3
+        import os
+        import re
+        import json
+        import glob
+        from pathlib import Path
+
+        def scan_workflows():
+            issues = []
+            workflow_dir = Path(".github/workflows")
+            
+            if not workflow_dir.exists():
+                return issues
+            
+            for workflow_file in glob.glob(str(workflow_dir / "*.yml")) + glob.glob(str(workflow_dir / "*.yaml")):
+                with open(workflow_file, 'r') as f:
+                    content = f.read()
+                    lines = content.split('\n')
+                    
+                    for line_num, line in enumerate(lines, start=1):
+                        if re.search(r'id-token\s*:\s*write', line, re.IGNORECASE):
+                            rel_path = str(Path(workflow_file).relative_to('.'))
+                            col = line.find('id-token')
+                            if col == -1:
+                                col = 1
+                            else:
+                                col += 1
+                            
+                            issue = {
+                                "ruleId": "github-actions/id-token-write",
+                                "ruleIndex": 0,
+                                "level": "error",
+                                "message": {
+                                    "text": "Workflow uses 'id-token: write' permission which allows requesting OIDC tokens."
+                                },
+                                "locations": [{
+                                    "physicalLocation": {
+                                        "artifactLocation": {
+                                            "uri": rel_path
+                                        },
+                                        "region": {
+                                            "startLine": line_num,
+                                            "startColumn": col,
+                                            "endLine": line_num,
+                                            "endColumn": col + len("id-token: write")
+                                        }
+                                    }
+                                }]
+                            }
+                            issues.append(issue)
+            
+            return issues
+
+        def generate_sarif(issues):
+            sarif = {
+                "version": "2.1.0",
+                "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+                "runs": [{
+                    "tool": {
+                        "driver": {
+                            "name": "Workflow Security Scanner",
+                            "version": "1.0.0",
+                            "rules": [{
+                                "id": "github-actions/id-token-write",
+                                "name": "id-token: write permission detected",
+                                "shortDescription": {
+                                    "text": "Workflow uses id-token: write permission"
+                                },
+                                "fullDescription": {
+                                    "text": "Detects when a workflow uses id-token: write permission, which allows the workflow to request OIDC tokens."
+                                },
+                                "defaultConfiguration": {
+                                    "level": "error"
+                                },
+                                "properties": {
+                                    "tags": ["security", "github-actions"]
+                                }
+                            }]
+                        }
+                    },
+                    "results": issues
+                }]
+            }
+            return sarif
+
+        if __name__ == "__main__":
+            issues = scan_workflows()
+            
+            if issues:
+                print(f"Found {len(issues)} issue(s)")
+                sarif = generate_sarif(issues)
+                with open("results.sarif", "w") as f:
+                    json.dump(sarif, f, indent=2)
+                print("Generated results.sarif")
+                exit(0)
+            else:
+                print("No issues found")
+                sarif = generate_sarif([])
+                with open("results.sarif", "w") as f:
+                    json.dump(sarif, f, indent=2)
+                exit(0)
+        EOF
+        python3 scan_workflows.py
+
+    - name: Upload SARIF file
+      if: always()
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: results.sarif
+        category: ${{ inputs.category }}
+
